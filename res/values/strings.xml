@@ -80,7 +80,7 @@
 	<string name="charge_only_message">Download only when on charger</string>
 	<string name="battery_level_title">Min battery percent</string>
 	<string name="twenty_five_percent">25</string>
-	<string name="fifty_percent">50;</string>
+	<string name="fifty_percent">50</string>
 	<string name="seventy_five_percent">75</string>
 	<string name="notify_title_error">Problem checking for update</string>
 	<string name="notify_title_flash">Update ready to flash</string>

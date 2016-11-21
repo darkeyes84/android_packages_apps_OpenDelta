@@ -33,7 +33,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
+import android.preference.SwitchPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
@@ -70,8 +70,8 @@ public class SettingsActivity extends PreferenceActivity implements
     private Preference mNetworksConfig;
     private ListPreference mAutoDownload;
     private ListPreference mBatteryLevel;
-    private CheckBoxPreference mChargeOnly;
-    private CheckBoxPreference mSecureMode;
+    private SwitchPreference mChargeOnly;
+    private SwitchPreference mSecureMode;
     private Config mConfig;
     private PreferenceCategory mAutoDownloadCategory;
     private ListPreference mSchedulerMode;
@@ -112,9 +112,9 @@ public class SettingsActivity extends PreferenceActivity implements
         mBatteryLevel = (ListPreference) findPreference(PREF_BATTERY_LEVEL);
         mBatteryLevel.setOnPreferenceChangeListener(this);
         mBatteryLevel.setSummary(mBatteryLevel.getEntry());
-        mChargeOnly = (CheckBoxPreference) findPreference(PREF_CHARGE_ONLY);
+        mChargeOnly = (SwitchPreference) findPreference(PREF_CHARGE_ONLY);
         mBatteryLevel.setEnabled(!prefs.getBoolean(PREF_CHARGE_ONLY, true));
-        mSecureMode = (CheckBoxPreference) findPreference(KEY_SECURE_MODE);
+        mSecureMode = (SwitchPreference) findPreference(KEY_SECURE_MODE);
         mSecureMode.setEnabled(mConfig.getSecureModeEnable());
         mSecureMode.setChecked(mConfig.getSecureModeCurrent());
         mAutoDownloadCategory = (PreferenceCategory) findPreference(KEY_CATEGORY_DOWNLOAD);
@@ -164,11 +164,11 @@ public class SettingsActivity extends PreferenceActivity implements
             showNetworks();
             return true;
         } else if (preference == mChargeOnly) {
-            boolean value = ((CheckBoxPreference) preference).isChecked();
+            boolean value = ((SwitchPreference) preference).isChecked();
             mBatteryLevel.setEnabled(!value);
             return true;
         } else if (preference == mSecureMode) {
-            boolean value = ((CheckBoxPreference) preference).isChecked();
+            boolean value = ((SwitchPreference) preference).isChecked();
             mConfig.setSecureModeCurrent(value);
             (new AlertDialog.Builder(this))
                     .setTitle(
