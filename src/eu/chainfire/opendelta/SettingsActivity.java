@@ -308,7 +308,10 @@ public class SettingsActivity extends PreferenceActivity implements
     }
 
     private boolean isSupportedVersion() {
-        return mConfig.isOfficialVersion();
+        if (mConfig.getVersion().indexOf(getString(R.string.official_version_tag)) == -1) {
+            return false;
+        }
+        return true;
     }
 
     private int cleanFiles() {

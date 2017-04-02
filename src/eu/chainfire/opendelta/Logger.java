@@ -26,7 +26,7 @@ import java.util.Locale;
 public class Logger {
     private final static String LOG_TAG = "OpenDelta";
     
-    private static boolean log = true;
+    private static boolean log = false;
 
     public static void setDebugLogging(boolean enabled) {
         log = enabled;
