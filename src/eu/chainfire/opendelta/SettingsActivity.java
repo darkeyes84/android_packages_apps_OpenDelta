@@ -26,13 +26,20 @@ import java.util.List;
 import java.util.Locale;
 
 import android.app.AlertDialog;
+import android.app.IThemeCallback;
+import android.app.ThemeManager;
 import android.app.TimePickerDialog;
 import android.app.TimePickerDialog.OnTimeSetListener;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings.Secure;
 import android.preference.SwitchPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -79,6 +86,9 @@ public class SettingsActivity extends PreferenceActivity implements
     private Preference mCleanFiles;
     private ListPreference mScheduleWeekDay;
 
+    private int mTheme;
+    private ThemeManager mThemeManager;
+
     @Override
     public void onPause() {
         super.onPause();
@@ -92,6 +102,20 @@ public class SettingsActivity extends PreferenceActivity implements
     @SuppressWarnings("deprecation")
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        final int themeMode = Secure.getInt(getContentResolver(),
+                Secure.THEME_PRIMARY_COLOR, 1);
+        final int accentColor = Secure.getInt(getContentResolver(),
+                Secure.THEME_ACCENT_COLOR, 0);
+        mThemeManager = (ThemeManager) getSystemService(Context.THEME_SERVICE);
+        if (mThemeManager != null) {
+            mThemeManager.addCallback(mThemeCallback);
+        }
+        if (themeMode != 0 || accentColor != 0) {
+            getTheme().applyStyle(mTheme, true);
+        }
+        if (themeMode == 1) {
+            getTheme().applyStyle(R.style.status_bar, true);
+        }
         super.onCreate(savedInstanceState);
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -344,4 +368,20 @@ public class SettingsActivity extends PreferenceActivity implements
         prefs.edit().putBoolean(UpdateService.PREF_DELTA_SIGNATURE, false).commit();
         prefs.edit().putString(UpdateService.PREF_INITIAL_FILE, UpdateService.PREF_READY_FILENAME_DEFAULT).commit();
     }
+
+    private final IThemeCallback mThemeCallback = new IThemeCallback.Stub() {
+
+        @Override
+        public void onThemeChanged(int themeMode, int color) {
+            onCallbackAdded(themeMode, color);
+            SettingsActivity.this.runOnUiThread(() -> {
+                SettingsActivity.this.recreate();
+            });
+        }
+
+        @Override
+        public void onCallbackAdded(int themeMode, int color) {
+            mTheme = color;
+        }
+    };
 }

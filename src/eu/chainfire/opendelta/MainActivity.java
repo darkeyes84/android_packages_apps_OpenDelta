@@ -29,16 +29,25 @@ import java.util.Locale;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.IThemeCallback;
+import android.app.ThemeManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.TypedArray;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
+import android.provider.Settings.Secure;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
@@ -74,8 +83,28 @@ public class MainActivity extends Activity {
 
     private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
 
+    private boolean mThemeEnabled;
+    private int mTheme;
+    private int mAccentColor;
+    private ThemeManager mThemeManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final int themeMode = Secure.getInt(getContentResolver(),
+                Secure.THEME_PRIMARY_COLOR, 1);
+        final int accentColor = Secure.getInt(getContentResolver(),
+                Secure.THEME_ACCENT_COLOR, 0);
+        mThemeManager = (ThemeManager) getSystemService(Context.THEME_SERVICE);
+        if (mThemeManager != null) {
+            mThemeManager.addCallback(mThemeCallback);
+        }
+        setTheme(R.style.Theme_OpenDelta);
+        if (themeMode != 0 || accentColor != 0) {
+            getTheme().applyStyle(mTheme, true);
+        }
+        if (themeMode == 1) {
+            getTheme().applyStyle(R.style.status_bar, true);
+        }
         super.onCreate(savedInstanceState);
 
         try {
@@ -161,6 +190,7 @@ public class MainActivity extends Activity {
 
     private IntentFilter updateFilter = new IntentFilter(
             UpdateService.BROADCAST_INTENT);
+
     private BroadcastReceiver updateReceiver = new BroadcastReceiver() {
         private String formatLastChecked(String filename, long ms) {
             Date date = new Date(ms);
@@ -210,6 +240,13 @@ public class MainActivity extends Activity {
             boolean deltaUpdatePossible = false;
             boolean fullUpdatePossible = false;
             boolean enableProgress = false;
+
+            final TypedArray ta = context.obtainStyledAttributes(new int[]{
+                android.R.attr.colorAccent,
+                android.R.attr.colorPrimary});
+            mAccentColor = ta.getColor(0, 0);
+            ta.recycle();
+
             final SharedPreferences prefs = PreferenceManager
                     .getDefaultSharedPreferences(MainActivity.this);
 
@@ -415,6 +452,14 @@ public class MainActivity extends Activity {
             buildNow.setVisibility(!enableBuild || enableFlash ? View.GONE
                     : View.VISIBLE);
             stopNow.setVisibility(enableStop ? View.VISIBLE : View.GONE);
+
+            checkNow.setTextColor(mAccentColor);
+            buildNow.setTextColor(mAccentColor);
+            flashNow.setTextColor(mAccentColor);
+
+            checkNow.setAlpha(enableCheck ? 1 : .5f);
+            buildNow.setAlpha(enableBuild ? 1 : .5f);
+            flashNow.setAlpha(enableFlash ? 1 : .5f);
         }
     };
 
@@ -568,4 +613,20 @@ public class MainActivity extends Activity {
             }
         }
     }
+
+    private final IThemeCallback mThemeCallback = new IThemeCallback.Stub() {
+
+        @Override
+        public void onThemeChanged(int themeMode, int color) {
+            onCallbackAdded(themeMode, color);
+            MainActivity.this.runOnUiThread(() -> {
+                MainActivity.this.recreate();
+            });
+        }
+
+        @Override
+        public void onCallbackAdded(int themeMode, int color) {
+            mTheme = color;
+        }
+    };
 }
